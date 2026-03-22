@@ -1,0 +1,15 @@
+{
+  "name": "search-crawler-assignment",
+  "version": "1.0.0",
+  "description": "Low-dependency web crawler and live search backend for the Brightwave-style assignment.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "cli": "node src/cli.js",
+    "test": "node test/utils.test.js && node test/crawler-service.test.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "license": "UNLICENSED"
+}
