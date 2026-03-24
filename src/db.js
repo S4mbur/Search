@@ -604,6 +604,64 @@ class CrawlerDatabase {
     }));
   }
 
+  searchCompatibility(query, limit) {
+    const normalized = String(query || "").trim().toLowerCase();
+    if (!normalized) {
+      return [];
+    }
+
+    const sql = `
+      SELECT
+        pt.term AS word,
+        p.url AS url,
+        pc.origin_url AS origin_url,
+        pc.depth AS depth,
+        pt.tf AS frequency,
+        ((pt.tf * 10) + 1000 - (pc.depth * 5)) AS relevance_score
+      FROM page_terms pt
+      JOIN pages p ON p.url = pt.url
+      JOIN page_contexts pc ON pc.url = p.url
+      WHERE pt.term = ?
+      ORDER BY relevance_score DESC, p.url ASC, pc.origin_url ASC
+    `;
+
+    const statement = this.db.prepare(limit ? `${sql}\nLIMIT ?` : sql);
+    const rows = limit ? statement.all(normalized, limit) : statement.all(normalized);
+
+    return rows.map((row) => ({
+      word: row.word,
+      url: row.url,
+      originUrl: row.origin_url,
+      depth: row.depth,
+      frequency: row.frequency,
+      relevanceScore: row.relevance_score,
+    }));
+  }
+
+  listStorageEntries() {
+    return this.db
+      .prepare(`
+        SELECT
+          pt.term AS word,
+          p.url AS url,
+          pc.origin_url AS origin_url,
+          pc.depth AS depth,
+          pt.tf AS frequency
+        FROM page_terms pt
+        JOIN pages p ON p.url = pt.url
+        JOIN page_contexts pc ON pc.url = p.url
+        ORDER BY pt.term ASC, p.url ASC, pc.origin_url ASC, pc.depth ASC
+      `)
+      .all()
+      .map((row) => ({
+        word: row.word,
+        url: row.url,
+        originUrl: row.origin_url,
+        depth: row.depth,
+        frequency: row.frequency,
+      }));
+  }
+
   getSystemStatus() {
     const pages = this.db.prepare("SELECT COUNT(*) AS count FROM pages").get().count;
     const visited = this.db

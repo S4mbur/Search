@@ -127,6 +127,21 @@ function createServer({ crawlerService, config }) {
         return sendJson(res, 200, crawlerService.search(query, limit));
       }
 
+      if (req.method === "GET" && requestUrl.pathname === "/search") {
+        const query = requestUrl.searchParams.get("query") || "";
+        const sortBy = requestUrl.searchParams.get("sortBy") || "relevance";
+        const limitParam = requestUrl.searchParams.get("limit");
+        const limit = limitParam === null ? undefined : Number(limitParam);
+
+        if (sortBy !== "relevance") {
+          return sendJson(res, 400, {
+            error: "Only sortBy=relevance is supported",
+          });
+        }
+
+        return sendJson(res, 200, crawlerService.searchCompatibility(query, limit));
+      }
+
       if (req.method === "GET" && requestUrl.pathname === "/api/system") {
         return sendJson(res, 200, crawlerService.getSystemStatus());
       }

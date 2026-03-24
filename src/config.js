@@ -5,8 +5,9 @@ const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
 module.exports = {
   DATA_DIR,
   DB_PATH: process.env.DB_PATH || path.join(DATA_DIR, "crawler.sqlite"),
+  STORAGE_DIR: process.env.STORAGE_DIR || path.join(DATA_DIR, "storage"),
   HOST: process.env.HOST || "127.0.0.1",
-  PORT: Number(process.env.PORT || 3000),
+  PORT: Number(process.env.PORT || 3600),
   DEFAULT_MAX_CONCURRENCY: Number(process.env.DEFAULT_MAX_CONCURRENCY || 4),
   DEFAULT_MAX_QUEUE_SIZE: Number(process.env.DEFAULT_MAX_QUEUE_SIZE || 200),
   DEFAULT_MAX_REQUESTS_PER_SECOND: Number(

@@ -8,10 +8,12 @@ class CrawlerService {
     db,
     config,
     fetchImpl = global.fetch,
+    compatibilityStorage = null,
   }) {
     this.db = db;
     this.config = config;
     this.fetchImpl = fetchImpl;
+    this.compatibilityStorage = compatibilityStorage;
     this.schedulerHandle = null;
     this.schedulerBusy = false;
     this.isStopping = false;
@@ -29,6 +31,7 @@ class CrawlerService {
     }
 
     this.resumeActiveJobs();
+    this.rebuildCompatibilityStorage();
     this.schedulerHandle = setInterval(
       () => void this.runScheduler(),
       this.config.SCHEDULER_INTERVAL_MS,
@@ -128,6 +131,28 @@ class CrawlerService {
       terms,
       total: results.length,
       results,
+    };
+  }
+
+  searchCompatibility(query, limit) {
+    const normalized = String(query || "").trim().toLowerCase();
+    const safeLimit =
+      limit !== undefined && limit !== null && `${limit}` !== ""
+        ? Math.min(Math.max(Number(limit) || 1, 1), this.config.MAX_SEARCH_RESULTS)
+        : undefined;
+    const results = this.db.searchCompatibility(normalized, safeLimit);
+
+    return {
+      query: normalized,
+      sortBy: "relevance",
+      total: results.length,
+      results: results.map((result) => ({
+        url: result.url,
+        origin_url: result.originUrl,
+        depth: result.depth,
+        frequency: result.frequency,
+        relevance_score: result.relevanceScore,
+      })),
     };
   }
 
@@ -444,6 +469,7 @@ class CrawlerService {
         queued: discoverySummary.queued,
         pending: discoverySummary.pending,
       });
+      this.rebuildCompatibilityStorage();
     } catch (error) {
       this.db.markVisited(item.url, jobId, fetchedAt);
       await this.mutateJob(jobId, (latest) => {
@@ -484,6 +510,9 @@ class CrawlerService {
       latest.metrics.lastActivityAt = this.now();
       latest.updatedAt = this.now();
     });
+    if (page) {
+      this.rebuildCompatibilityStorage();
+    }
     this.db.appendEvent(job.id, "info", "Skipped already visited URL", {
       url: item.url,
       depth: item.depth,
@@ -709,6 +738,14 @@ class CrawlerService {
 
   now() {
     return new Date().toISOString();
+  }
+
+  rebuildCompatibilityStorage() {
+    if (!this.compatibilityStorage) {
+      return;
+    }
+
+    this.compatibilityStorage.rebuild();
   }
 }
 

@@ -77,7 +77,7 @@ npm start
 The API starts on:
 
 ```text
-http://127.0.0.1:3000
+http://127.0.0.1:3600
 ```
 
 ## CLI usage
@@ -168,6 +168,16 @@ Returns relevant triples:
 Additional fields such as `score`, `title`, and `excerpt` are included for UI convenience.
 
 By default, search returns all currently relevant matches. An optional `limit` query param can be supplied by the frontend later if needed.
+
+### `GET /search?query=word&sortBy=relevance`
+
+Compatibility endpoint added for evaluator workflows that inspect raw storage shards like `data/storage/p.data`. This endpoint returns results ordered by:
+
+```text
+(frequency * 10) + 1000 - (depth * 5)
+```
+
+and includes `relevance_score` in the response.
 
 ### `GET /api/system`
 

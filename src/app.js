@@ -2,10 +2,15 @@ const { CrawlerDatabase } = require("./db");
 const { createServer } = require("./server");
 const config = require("./config");
 const { CrawlerService } = require("./crawler/CrawlerService");
+const { CompatibilityStorage } = require("./storage/CompatibilityStorage");
 
 async function main() {
   const db = new CrawlerDatabase(config.DB_PATH);
-  const crawlerService = new CrawlerService({ db, config });
+  const compatibilityStorage = new CompatibilityStorage({
+    db,
+    storageDir: config.STORAGE_DIR,
+  });
+  const crawlerService = new CrawlerService({ db, config, compatibilityStorage });
   await crawlerService.start();
 
   const server = createServer({ crawlerService, config });
